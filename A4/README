@@ -1,0 +1,17 @@
+
+
+Code pieces for the LQR of the lander
+
+Kalman as the observer,
+DARE as the controller
+fall.cpp has the equations for the lander
+
+main.cpp shoes ho to use the DARE.
+
+
+Ask me if you think somehting is not right,
+ask in the lecture if you not sure what to do.
+
+Implement the lander with observer and optimal controller. The observer determines the hight with an unknown gravity, the controller ensures the speed x' is zero as we reach ground at x=0 starting at some initial hight. (note, the controller can not accelerate the lander, only break it, else you would have to turn it upside down ...)
+I give you a zip file that has a Kalman and a DARE and a README file.
+And in your main code (you do not modify the Kalman and the DARE) and a plot of a successful landing. Delivery And in the printout of your mail file, and the plot you generate and the plot of the the estimated gravity.
