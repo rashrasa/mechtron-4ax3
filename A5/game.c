@@ -10,7 +10,10 @@ int  score;   /* Globals */
 char in[20];
 
 const char VALUE_LIST_PATH[] = "./current_value_states.csv";
+
+// Learning
 const bool LEARNING_MODE = true;
+const double REWARD_DISCOUNT = 0.1;
 
 int user(void)
 {
@@ -42,16 +45,30 @@ int computer2(void)
 	else return(rand() % 2 + 1);
 }
 
-int valueIterationComputer(float values[21]) {
-
-	// TODO
-
+// returns 1 or 2 - greedy policy
+int valueIterationComputer(float values[21], int current_state) {
+	// Invalid state
+	if (current_state < 0 | current_state >= 20) {
+		printf("Program crashed: Invalid input state during computer's turn.");
+		exit(1);
+	}
+	// 1 and 2 are valid moves
+	if (current_state + 2 <= 20) {
+		return (values[current_state + 1] > values[current_state + 2]) ? 1 : 2;
+	}
+	// Only 1 is a valid move
+	else if (current_state + 1 <= 20) {
+		return 1;
+	}
+	else {
+		printf("Game crashed: Invalid state reached: State %d", current_state);
+		exit(1);
+	}
 }
 
-int runValueIteration() {
-	// TODO
+void runValueIteration(float values[21]) {
+	// V(s) = max_a(Rss'a + GAMMA*V(s'))
 }
-
 
 
 int main(void)
@@ -62,7 +79,8 @@ int main(void)
 
 	if (LEARNING_MODE) {
 		// TODO
-		runValueIteration();
+		runValueIteration(values_file);
+		return 0;
 	}
 	srand(time(NULL));
 	int i;
@@ -82,6 +100,6 @@ int main(void)
 		if (score >= 20) { printf(" I WIN !! \n "); break; };
 	};
 	close(values_file);
-	return(0);
+	return 0;
 };
 
