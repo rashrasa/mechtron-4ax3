@@ -13,7 +13,7 @@ char in[20];
 // Learning
 const double TERMINATION_REWARD = 1;
 const double GAMMA = 0.9;
-const double TOLERANCE = 1e-2;
+const double TOLERANCE = 1e-9;
 
 // states are encoded as:
 // i % 2 == 0 -> agent turn
@@ -63,7 +63,7 @@ int valueIterationComputer(float values[NUM_STATES], unsigned int state) {
 	}
 	// 1 and 2 are valid moves
 	if (score + 2 <= 20) {
-		return (values[state + 1] > values[state + 3]) ? 1 : 2;
+		return (values[state + 3] > values[state + 5]) ? 1 : 2;
 	}
 	// Only 1 is a valid move
 	else if (score + 1 <= 20) {
@@ -76,30 +76,33 @@ int valueIterationComputer(float values[NUM_STATES], unsigned int state) {
 }
 
 // Mutates array with updated values
-void runValueIteration(float values[NUM_STATES]) {
+void runValueIteration(float* values) {
 	float old_values[NUM_STATES];
+
 	float improvement = 0;
 
 	do {
 		// Store old values
-		memcpy(old_values, values, NUM_STATES * sizeof(float));
+		for (int i = 0; i < NUM_STATES; i++) {
+			old_values[i] = values[i];
+		}
 
 		improvement = 0;
-		for (int i = 0; i < 40; i++) { // Iterate over NON terminal states
+		for (int i = 0; i < 40; i++) { // Iterate over non-terminal states
 			// V(s) = max_a(Rss'a + GAMMA*V(s'))
 			bool agent_turn = i % 2 == 0;
 			unsigned int score = i / 2;
 			
 			// Calculate next state
 			int s_prime;
+			float rSSA = 0;
 			if (agent_turn) {
-				s_prime = i + ((valueIterationComputer(old_values, i) == 2) ? 3 : 1);
+				s_prime = i + ((valueIterationComputer(old_values, i) == 2) ? 5 : 3);
 			}
 			else {
 				s_prime = i + ((computer2(score) == 2) ? 3 : 1);
 			}
 			// Termination states
-			float rSSA = 0;
 			if (s_prime/2 >= 20 && s_prime % 2 == 1) { // You win if the score is >=20 and it's the opponent's turn (meaning you just played your turn)
 				rSSA = +TERMINATION_REWARD;
 			}
@@ -109,19 +112,27 @@ void runValueIteration(float values[NUM_STATES]) {
 			values[i] = rSSA + GAMMA * old_values[s_prime];
 
 			// Evaluate
-			improvement = max(abs(old_values[i] - values[i]), improvement);
+			improvement = max(fabs(old_values[i] - values[i]), improvement);
 		}
 	} while (improvement > TOLERANCE);
+}
+
+int scoreTurnToState(int score, bool agent_turn) {
+	return score * 2 + (agent_turn ? 0 : 1);
 }
 
 
 int main(void)
 {
-	float values[NUM_STATES]; // implicit init to zeroes
+	float values[NUM_STATES];
+	for (int i = 0; i < NUM_STATES; i++) {
+		values[i] = 0.0;
+	}
 	runValueIteration(values); // learns values on each run
+	printf("Value Function:\n");
 	printf("Score\tAgent\tOpponent\n");
-	for (unsigned int i = 0; i < NUM_STATES/2; i+=2) {
-		printf("%d\t%.4f\t%.4f\n", i/2, values[i*2], values[i*2+1]);
+	for (unsigned int i = 0; i < NUM_STATES; i+=2) {
+		printf("%d\t%.4f\t%.4f\n", i/2, values[i], values[i+1]);
 	}
 
 	srand(time(NULL));
@@ -129,17 +140,23 @@ int main(void)
 	printf(" Who says first 20 \n \n");
 	int score = 0;
 	i = 0;
+	bool user_turn;
 	while (i != 1 && i != 2) {
 		printf("Who goes first: you=1 computer=2 ? ");
 		fgets(in, 10, stdin);
 		i = atoi(in);
 	};
-	if (i == 2)score = valueIterationComputer(values, score);
+	user_turn = (i == 1);
 	while (score <= 20) {
-		score = score + user(score);
-		if (score >= 20) { printf(" YOU WIN !!\n "); break; };
-		score = score + valueIterationComputer(values, score);
-		if (score >= 20) { printf(" I WIN !! \n "); break; };
+		if (user_turn) {
+			score = score + user(score);
+			if (score >= 20) { printf(" YOU WIN !!\n "); break; };
+		}
+		else {
+			score = score + valueIterationComputer(values, scoreTurnToState(score, !user_turn));
+			if (score >= 20) { printf(" BOT WINS !! \n "); break; };
+		}
+		user_turn = !user_turn;
 	};
 	return 0;
 };
